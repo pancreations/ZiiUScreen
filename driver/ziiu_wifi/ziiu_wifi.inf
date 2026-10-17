@@ -1,0 +1,87 @@
+;
+; ziiu_wifi.inf - ZiiUScreen GamePad radio driver for the MediaTek MT7925 (Wi-Fi function only).
+;
+; Installed only on demand by tools\wifi-mode.ps1 GamePad, which force-binds it to the
+; single MT7925 Wi-Fi device. It never replaces MediaTek's driver on its own: MediaTek's
+; signed driver always ranks higher.
+;
+; Boot safety:
+; - Own device setup class (not Net), so neither Safe Mode nor Safe Mode with
+;   Networking loads this driver.
+; - StartType 3 (demand) and ErrorControl 1 (normal): if the driver fails to load,
+;   Windows logs it and keeps booting.
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = ZiiUScreen
+ClassGuid   = {FE602F9E-2257-4D82-8C54-FA8B16EED8FF}
+Provider    = %ProviderName%
+CatalogFile = ziiu_wifi.cat
+DriverVer   = 10/14/2026,0.4.0.0
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+ziiu_wifi.sys = 1,,
+
+[ClassInstall32]
+AddReg = ZiiU_ClassReg
+
+[ZiiU_ClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[Manufacturer]
+%ProviderName% = ZiiU, NT$ARCH$.10.0...16299
+
+[ZiiU.NT$ARCH$.10.0...16299]
+; MT7925 PCIe Wi-Fi function. Bluetooth is a separate USB function and Ethernet a
+; different PCI device; neither can match this ID.
+%DeviceDesc% = ZiiU_Device, PCI\VEN_14C3&DEV_7925
+
+[ZiiU_Device.NT]
+CopyFiles = ZiiU_CopyFiles
+
+[ZiiU_CopyFiles]
+ziiu_wifi.sys
+
+[ZiiU_Device.NT.HW]
+AddReg = ZiiU_Device_HwReg
+
+[ZiiU_Device_HwReg]
+; Only SYSTEM and Administrators may open the device (applied by PnP to the whole stack).
+HKR,,Security,,"D:P(A;;GA;;;SY)(A;;GA;;;BA)"
+
+[ZiiU_Device.NT.Services]
+AddService = ziiu_wifi, 0x00000002, ZiiU_Service
+
+[ZiiU_Service]
+DisplayName   = %ServiceDesc%
+ServiceType   = 1               ; SERVICE_KERNEL_DRIVER
+StartType     = 3               ; SERVICE_DEMAND_START
+ErrorControl  = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary = %13%\ziiu_wifi.sys
+AddReg        = ZiiU_Service_AddReg
+
+[ZiiU_Service_AddReg]
+; Crash latch, see driver.c. 0 = no hardware operation in progress.
+HKR,Parameters,HwOpInProgress,0x00010003,0
+
+[ZiiU_Device.NT.Wdf]
+KmdfService = ziiu_wifi, ZiiU_WdfSect
+
+[ZiiU_WdfSect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+ProviderName = "ZiiUScreen"
+ClassName    = "ZiiUScreen devices"
+DiskName     = "ZiiUScreen Driver Disk"
+DeviceDesc   = "ZiiUScreen GamePad Radio (MediaTek MT7925)"
+ServiceDesc  = "ZiiUScreen GamePad Radio"

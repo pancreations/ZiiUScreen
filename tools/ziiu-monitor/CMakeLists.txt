@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(ziiu_monitor CXX)
+set(CMAKE_CXX_STANDARD 17)
+add_executable(ziiu-monitor ziiu_monitor.cpp)
+target_compile_definitions(ziiu-monitor PRIVATE UNICODE _UNICODE)
+target_link_libraries(ziiu-monitor PRIVATE swdevice user32 advapi32)

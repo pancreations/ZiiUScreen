@@ -1,0 +1,73 @@
+# Build output
+build/
+out/
+x64/
+ARM64/
+*.obj
+*.pdb
+*.ilk
+*.tlog
+*.log
+
+# Visual Studio
+.vs/
+*.user
+
+# Local-only machine data (driver backups, captures). Never commit vendor binaries.
+.local/
+
+# Firmware is fetched by tools/fetch-firmware.ps1, not committed
+driver/firmware/
+
+# Wii U homebrew build outputs
+tools/wiiu-probe/build/
+tools/wiiu-probe/*.wuhb
+tools/wiiu-probe/*.rpx
+tools/wiiu-probe/*.elf
+tools/wiiu-live-probe/build/
+tools/wiiu-live-probe/*.wuhb
+tools/wiiu-live-probe/*.rpx
+tools/wiiu-live-probe/*.elf
+tools/wiiu-live-probe/__pycache__/
+tools/wiiu-workbench/build/
+tools/wiiu-workbench/*.wps
+tools/wiiu-workbench/*.elf
+tools/wiiu-workbench/__pycache__/
+tools/gamepad-link/__pycache__/
+
+# Desktop app, built by tools/ziiu-app/build.ps1
+/ZiiUScreen.exe
+
+# Publication hygiene: credentials, device dumps, captures, and signing material
+.vscode/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+*.crt
+*.pcap
+*.pcapng
+*.dmp
+*.h264
+*.yuv
+ziiu-probe.txt
+hostapd.conf
+connection.json
+*.token
+__pycache__/
+*.pyc
+bin/
+obj/
+*.exe
+*.dll
+*.sys
+*.cat
+*.wuhb
+*.wps
+*.rpx
+*.elf
+*.zip

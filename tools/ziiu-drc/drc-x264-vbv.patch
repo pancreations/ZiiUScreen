@@ -1,0 +1,74 @@
+--- a/encoder/encoder.c
++++ b/encoder/encoder.c
+@@ -1832,7 +1832,8 @@
+     /* Assembly implementation of nal_escape reads past the end of the input.
+      * While undefined padding wouldn't actually affect the output, it makes valgrind unhappy. */
+     memset( end, 0xff, 64 );
+-    if( h->param.nalu_process )
++    if( h->param.nalu_process &&
++        !(h->param.b_drh_mode && (nal->i_type == NAL_SLICE || nal->i_type == NAL_SLICE_IDR)) )
+         h->param.nalu_process( h, nal, h->fenc->opaque );
+     h->out.i_nal++;
+ 
+@@ -2606,6 +2607,8 @@
+ 
+     int cabac_last_size = -2;
+     int b_cabac_chunk_ending = 0;
++    int drh_row_nal_count = 0, drh_row_cabac_size = 0, drh_row_chunk_ending = 0;
++    x264_nal_t drh_row_nal = {0};
+ 
+     while( 1 )
+     {
+@@ -2617,7 +2620,16 @@
+             if( x264_bitstream_check_buffer( h ) )
+                 return -1;
+             if( !(i_mb_y & SLICE_MBAFF) && h->param.rc.i_vbv_buffer_size )
++            {
+                 x264_bitstream_backup( h, &bs_bak[BS_BAK_ROW_VBV], i_skip, 1 );
++                if( h->param.b_drh_mode )
++                {
++                    drh_row_nal_count = h->out.i_nal;
++                    drh_row_nal = h->out.nal[h->out.i_nal];
++                    drh_row_cabac_size = cabac_last_size;
++                    drh_row_chunk_ending = b_cabac_chunk_ending;
++                }
++            }
+             if( !h->mb.b_reencode_mb )
+                 x264_fdec_filter_row( h, i_mb_y, 0 );
+         }
+@@ -2767,6 +2779,15 @@
+         if( x264_ratecontrol_mb( h, mb_size ) < 0 )
+         {
+             x264_bitstream_restore( h, &bs_bak[BS_BAK_ROW_VBV], &i_skip, 1 );
++            /* A VBV retry also rewinds any DRH boundary emitted in this row.
++             * Callbacks are deferred until the final bitstream is stable. */
++            if( h->param.b_drh_mode )
++            {
++                h->out.i_nal = drh_row_nal_count;
++                h->out.nal[h->out.i_nal] = drh_row_nal;
++                cabac_last_size = drh_row_cabac_size;
++                b_cabac_chunk_ending = drh_row_chunk_ending;
++            }
+             h->mb.b_reencode_mb = 1;
+             i_mb_x = 0;
+             i_mb_y = i_mb_y - SLICE_MBAFF;
+@@ -2861,8 +2882,6 @@
+                 nal->i_last_mb = mb_xy;
+                 nal->i_payload = cabac_size_bytes(&h->cabac) - cabac_last_size;
+ 
+-                if ( h->param.nalu_process )
+-                    h->param.nalu_process( h, nal, h->fenc->opaque );
+                 x264_nal_check_buffer( h );
+ 
+                 /* x264_nal_check_buffer may realloc out.nal */
+@@ -3805,6 +3824,10 @@
+     }
+ 
+     /* End bitstream, set output  */
++    if( h->param.b_drh_mode && h->param.nalu_process )
++        for( int i = 0; i < h->out.i_nal; i++ )
++            if( h->out.nal[i].i_type == NAL_SLICE || h->out.nal[i].i_type == NAL_SLICE_IDR )
++                h->param.nalu_process( h, &h->out.nal[i], pic_out->opaque );
+     *pi_nal = h->out.i_nal;
+     *pp_nal = h->out.nal;
+ 

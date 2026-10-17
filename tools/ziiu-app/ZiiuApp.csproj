@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Only for the tray icon (System.Windows.Forms.NotifyIcon). -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ZiiUScreen</AssemblyName>
+    <RootNamespace>ZiiuApp</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.0</Version>
+    <!-- WPF0001: Application.ThemeMode (Windows 11 Fluent theme) is marked experimental in .NET 9. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- One exe (needs the installed .NET 9 Desktop Runtime, not a folder of DLLs). -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <!-- build.ps1 bakes in the repo path, so the exe also works copied elsewhere. -->
+  <ItemGroup Condition="'$(ZiiuRepo)' != ''">
+    <AssemblyMetadata Include="ZiiuRepo" Value="$(ZiiuRepo)" />
+  </ItemGroup>
+  <!-- build.ps1 generates the .ico from ZIIUICON.png and passes ZiiuIcon. -->
+  <PropertyGroup Condition="'$(ZiiuIcon)' != '' And Exists('$(ZiiuIcon)')">
+    <ApplicationIcon>$(ZiiuIcon)</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="..\..\ZIIUICON.png" Link="Assets\ZIIUICON.png" />
+  </ItemGroup>
+</Project>

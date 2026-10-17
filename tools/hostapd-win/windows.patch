@@ -1,0 +1,115 @@
+--- a/hostapd/ctrl_iface.h
++++ b/hostapd/ctrl_iface.h
+@@ -12,8 +12,8 @@
+ #ifndef CONFIG_NO_CTRL_IFACE
+ int hostapd_ctrl_iface_init(struct hostapd_data *hapd);
+ void hostapd_ctrl_iface_deinit(struct hostapd_data *hapd);
+-int hostapd_global_ctrl_iface_init(struct hapd_interfaces *interface);
+-void hostapd_global_ctrl_iface_deinit(struct hapd_interfaces *interface);
++int hostapd_global_ctrl_iface_init(struct hapd_interfaces *ifaces);
++void hostapd_global_ctrl_iface_deinit(struct hapd_interfaces *ifaces);
+ #else /* CONFIG_NO_CTRL_IFACE */
+ static inline int hostapd_ctrl_iface_init(struct hostapd_data *hapd)
+ {
+@@ -25,13 +25,13 @@
+ }
+ 
+ static inline int
+-hostapd_global_ctrl_iface_init(struct hapd_interfaces *interface)
++hostapd_global_ctrl_iface_init(struct hapd_interfaces *ifaces)
+ {
+ 	return 0;
+ }
+ 
+ static inline void
+-hostapd_global_ctrl_iface_deinit(struct hapd_interfaces *interface)
++hostapd_global_ctrl_iface_deinit(struct hapd_interfaces *ifaces)
+ {
+ }
+ #endif /* CONFIG_NO_CTRL_IFACE */
+--- a/src/ap/beacon.c
++++ b/src/ap/beacon.c
+@@ -10,7 +10,6 @@
+ 
+ #include "utils/includes.h"
+ 
+-#ifndef CONFIG_NATIVE_WINDOWS
+ 
+ #include "utils/common.h"
+ #include "common/ieee802_11_defs.h"
+@@ -1372,4 +1371,3 @@
+ 	return ret;
+ }
+ 
+-#endif /* CONFIG_NATIVE_WINDOWS */
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -8,7 +8,6 @@
+ 
+ #include "utils/includes.h"
+ 
+-#ifndef CONFIG_NATIVE_WINDOWS
+ 
+ #include "utils/common.h"
+ #include "utils/eloop.h"
+@@ -3176,4 +3175,3 @@
+ }
+ 
+ 
+-#endif /* CONFIG_NATIVE_WINDOWS */
+--- a/src/ap/wpa_auth_ie.c
++++ b/src/ap/wpa_auth_ie.c
+@@ -234,7 +234,12 @@
+ 		capab |= WPA_CAPABILITY_PEERKEY_ENABLED;
+ 	if (conf->wmm_enabled) {
+ 		/* 4 PTKSA replay counters when using WMM */
++#ifdef CONFIG_TENDONIN
++		/* A Wii U console advertises 4 (RSN capabilities 0x0008). */
++		capab |= (RSN_NUM_REPLAY_COUNTERS_4 << 2);
++#else /* CONFIG_TENDONIN */
+ 		capab |= (RSN_NUM_REPLAY_COUNTERS_16 << 2);
++#endif /* CONFIG_TENDONIN */
+ 	}
+ #ifdef CONFIG_IEEE80211W
+ 	if (conf->ieee80211w != NO_MGMT_FRAME_PROTECTION) {
+--- a/src/drivers/driver.h
++++ b/src/drivers/driver.h
+@@ -4984,5 +4984,8 @@
+ #ifdef CONFIG_DRIVER_NONE
+ extern const struct wpa_driver_ops wpa_driver_none_ops; /* driver_none.c */
+ #endif /* CONFIG_DRIVER_NONE */
++#ifdef CONFIG_DRIVER_ZIIU
++extern const struct wpa_driver_ops wpa_driver_ziiu_ops; /* driver_ziiu.c */
++#endif /* CONFIG_DRIVER_ZIIU */
+ 
+ #endif /* DRIVER_H */
+--- a/src/drivers/drivers.c
++++ b/src/drivers/drivers.c
+@@ -43,6 +43,9 @@
+ #ifdef CONFIG_DRIVER_ATHEROS
+ 	&wpa_driver_atheros_ops,
+ #endif /* CONFIG_DRIVER_ATHEROS */
++#ifdef CONFIG_DRIVER_ZIIU
++	&wpa_driver_ziiu_ops,
++#endif /* CONFIG_DRIVER_ZIIU */
+ #ifdef CONFIG_DRIVER_NONE
+ 	&wpa_driver_none_ops,
+ #endif /* CONFIG_DRIVER_NONE */
+--- a/src/drivers/drivers.mak
++++ b/src/drivers/drivers.mak
+@@ -89,6 +89,15 @@
+ DRV_OBJS += ../src/drivers/driver_openbsd.o
+ endif
+ 
++ifdef CONFIG_DRIVER_ZIIU
++DRV_AP_CFLAGS += -DCONFIG_DRIVER_ZIIU
++DRV_AP_OBJS += ../src/drivers/driver_ziiu.o
++DRV_AP_OBJS += ../src/drivers/ziiu_net.o
++DRV_AP_OBJS += ../src/crypto/aes-ccm.o
++DRV_AP_LIBS += -lwinmm
++NEED_AP_MLME=y
++endif
++
+ ifdef CONFIG_DRIVER_NONE
+ DRV_CFLAGS += -DCONFIG_DRIVER_NONE
+ DRV_OBJS += ../src/drivers/driver_none.o

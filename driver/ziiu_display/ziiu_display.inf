@@ -1,0 +1,68 @@
+;
+; ziiu_display.inf - ZiiUScreen virtual monitor (IddCx indirect display, UMDF 2).
+; Based on Microsoft's IddSampleDriver.inf (Windows-driver-samples, MS-PL).
+; The device exists only while tools\ziiu-monitor holds it (SwDeviceCreate with
+; hardware id ZiiUScreenDisplay); removing the package: pnputil /delete-driver.
+;
+[Version]
+PnpLockDown=1
+Signature="$Windows NT$"
+ClassGUID={4D36E968-E325-11CE-BFC1-08002BE10318}
+Class=Display
+ClassVer=2.0
+Provider=%ManufacturerName%
+CatalogFile=ziiu_display.cat
+DriverVer=
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$.10.0...22000
+
+[Standard.NT$ARCH$.10.0...22000]
+%DeviceName%=ZiiuDisplay_Install, ZiiUScreenDisplay
+
+[SourceDisksFiles]
+ziiu_display.dll=1
+
+[SourceDisksNames]
+1=%DiskName%
+
+[ZiiuDisplay_Install.NT]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT
+CopyFiles=UMDriverCopy
+
+[ZiiuDisplay_Install.NT.hw]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT.HW
+AddReg=ZiiuDisplay_HardwareDeviceSettings
+
+[ZiiuDisplay_HardwareDeviceSettings]
+HKR,, "UpperFilters", %REG_MULTI_SZ%, "IndirectKmd"
+HKR, "WUDF", "DeviceGroupId", %REG_SZ%, "ZiiUScreenDisplayGroup"
+
+[ZiiuDisplay_Install.NT.Services]
+Include=WUDFRD.inf
+Needs=WUDFRD.NT.Services
+
+[ZiiuDisplay_Install.NT.Wdf]
+UmdfService=ziiu_display,ziiu_display_Install
+UmdfServiceOrder=ziiu_display
+UmdfKernelModeClientPolicy=AllowKernelModeClients
+
+[ziiu_display_Install]
+UmdfLibraryVersion=$UMDFVERSION$
+ServiceBinary=%12%\UMDF\ziiu_display.dll
+UmdfExtensions=IddCx0102
+
+[DestinationDirs]
+UMDriverCopy=12,UMDF
+
+[UMDriverCopy]
+ziiu_display.dll
+
+[Strings]
+ManufacturerName="ZiiUScreen"
+DiskName="ZiiUScreen virtual monitor"
+DeviceName="ZiiUScreen GamePad Display"
+REG_MULTI_SZ=0x00010000
+REG_SZ=0x00000000

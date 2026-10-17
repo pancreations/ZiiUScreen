@@ -1,0 +1,7 @@
+<Project>
+  <!-- Keep build output in the repo's ignored build/ folder, not next to the sources. -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)..\..\build\ziiu-app\obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)..\..\build\ziiu-app\bin\</BaseOutputPath>
+  </PropertyGroup>
+</Project>
